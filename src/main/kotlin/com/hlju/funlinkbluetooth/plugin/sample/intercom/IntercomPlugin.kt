@@ -1,11 +1,15 @@
 package com.hlju.funlinkbluetooth.plugin.sample.intercom
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import com.hlju.funlinkbluetooth.core.plugin.api.FunLinkPayload
 import com.hlju.funlinkbluetooth.core.plugin.api.GamePlugin
 import com.hlju.funlinkbluetooth.core.plugin.api.PluginManifest
@@ -76,6 +80,15 @@ class IntercomPlugin : GamePlugin(PluginManifest(id = "demo_intercom", name = "�
 
         appContext = context.applicationContext
 
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            appendLog("--- 录音权限不足，无法开始对讲 ---")
+            return
+        }
+
         val endpointIds = hostBindings.connectedEndpointIds
         if (endpointIds.isEmpty()) {
             appendLog("--- 未连接设备，无法开始对讲 ---")
@@ -94,13 +107,7 @@ class IntercomPlugin : GamePlugin(PluginManifest(id = "demo_intercom", name = "�
 
         val recordBufferSize = (minBuffer * 2).coerceAtLeast(AudioWorkers.IO_CHUNK_BYTES)
         val audioRecord = try {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                AudioWorkers.SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                recordBufferSize
-            )
+            createAudioRecord(recordBufferSize)
         } catch (_: SecurityException) {
             appendLog("--- 录音权限不足，无法开始对讲 ---")
             return
@@ -226,6 +233,17 @@ class IntercomPlugin : GamePlugin(PluginManifest(id = "demo_intercom", name = "�
             onStopClick = {
                 stopIntercomStreaming(emitLog = true)
             }
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun createAudioRecord(recordBufferSize: Int): AudioRecord {
+        return AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            AudioWorkers.SAMPLE_RATE,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            recordBufferSize
         )
     }
 }

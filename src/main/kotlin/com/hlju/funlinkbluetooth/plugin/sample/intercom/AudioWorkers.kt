@@ -4,7 +4,6 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
-import android.media.MediaRecorder
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
